@@ -23,11 +23,10 @@ infomercado-rss/
 ├── api/
 │   ├── news.js          # API principal para noticias
 │   └── health.js        # Health check endpoint
-├── public/
-│   └── index.html       # Frontend
+├── index.html           # Frontend
 ├── package.json         # Dependencias
 ├── vercel.json          # Configuración Vercel
-└── README.md           # Este archivo
+└── README.md            # Este archivo
 ```
 
 ## 🛠️ Instalación Local
