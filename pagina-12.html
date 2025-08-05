@@ -324,12 +324,22 @@
             border: 1px solid #f5c6cb;
         }
 
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+
         .stats {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
             font-size: 0.9rem;
             color: #666;
+            flex-wrap: wrap;
         }
 
         .stat-item {
@@ -339,10 +349,41 @@
             border: 1px solid #dee2e6;
         }
 
+        .stat-item.cached {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+        }
+
         .no-results {
             text-align: center;
             padding: 40px;
             color: #666;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
@@ -352,7 +393,7 @@
             <div class="header-content">
                 <div>
                     <div class="logo">InfoMercado</div>
-                    <div class="tagline">Noticias Económicas - Página 12</div>
+                    <div class="tagline">Noticias Económicas - Página 12 | Backend Integrado</div>
                 </div>
                 <div class="search-container">
                     <input type="text" class="search-input" placeholder="Buscar noticias..." id="searchInput">
@@ -365,18 +406,22 @@
     <div class="main-content">
         <main class="news-section">
             <h2 class="section-title">
-                Noticias de Economía
-                <button class="refresh-btn" onclick="loadNews()">🔄 Actualizar</button>
+                <span id="connectionStatus">
+                    <span class="status-indicator status-loading"></span>
+                    Noticias de Economía
+                </span>
+                <button class="refresh-btn" onclick="refreshNews()">🔄 Actualizar</button>
             </h2>
             
             <div class="stats" id="newsStats" style="display: none;">
-                <div class="stat-item">📰 <span id="totalNews">0</span> noticias</div>
-                <div class="stat-item">🕒 Última actualización: <span id="lastUpdate">-</span></div>
+                <div class="stat-item" id="totalStat">📰 <span id="totalNews">0</span> noticias</div>
+                <div class="stat-item" id="updateStat">🕒 <span id="lastUpdate">-</span></div>
+                <div class="stat-item" id="cacheStat">💾 <span id="cacheStatus">-</span></div>
             </div>
             
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                Cargando noticias de Página 12...
+                Conectando con el servidor...
             </div>
             
             <div class="news-grid" id="newsGrid" style="display: none;">
@@ -386,31 +431,43 @@
 
         <aside class="sidebar">
             <div class="widget">
-                <h3 class="widget-title">Información</h3>
-                <div>
-                    <p style="margin-bottom: 10px;"><strong>Fuente:</strong> Página 12 - Sección Economía</p>
-                    <p style="margin-bottom: 10px;"><strong>Actualización:</strong> En tiempo real</p>
-                    <p style="margin-bottom: 10px;"><strong>RSS:</strong> <a href="https://www.pagina12.com.ar/rss/secciones/economia/notas" target="_blank" style="color: #2a5298;">Ver feed original</a></p>
+                <h3 class="widget-title">Estado del Servidor</h3>
+                <div id="serverStatus">
+                    <div style="margin-bottom: 10px;">🌐 <strong>Backend:</strong> <span id="backendStatus">Conectando...</span></div>
+                    <div style="margin-bottom: 10px;">📡 <strong>API:</strong> <span id="apiEndpoint">http://localhost:3000/api/news</span></div>
+                    <div style="margin-bottom: 10px;">📰 <strong>RSS:</strong> Página 12 Economía</div>
+                    <div>⚡ <strong>Cache:</strong> <span id="cacheInfo">10 min</span></div>
                 </div>
             </div>
 
             <div class="widget">
                 <h3 class="widget-title">Funcionalidades</h3>
                 <div>
-                    <div style="margin-bottom: 8px;">✅ Noticias en tiempo real</div>
-                    <div style="margin-bottom: 8px;">✅ Búsqueda instantánea</div>
-                    <div style="margin-bottom: 8px;">✅ Contenido expandible</div>
-                    <div style="margin-bottom: 8px;">✅ Enlaces a fuente original</div>
-                    <div>✅ Actualización automática</div>
+                    <div style="margin-bottom: 8px;">✅ Backend Node.js + Express</div>
+                    <div style="margin-bottom: 8px;">✅ Cache inteligente (10 min)</div>
+                    <div style="margin-bottom: 8px;">✅ Sin restricciones CORS</div>
+                    <div style="margin-bottom: 8px;">✅ Actualización automática</div>
+                    <div style="margin-bottom: 8px;">✅ Manejo de errores robusto</div>
+                    <div>✅ API REST completa</div>
                 </div>
             </div>
 
             <div class="widget">
-                <h3 class="widget-title">Estadísticas</h3>
-                <div id="sidebarStats">
-                    <div style="margin-bottom: 8px;">📊 Total artículos: <span id="sidebarTotal">0</span></div>
-                    <div style="margin-bottom: 8px;">🔍 Resultados visibles: <span id="sidebarVisible">0</span></div>
-                    <div>⚡ Estado: <span id="connectionStatus">Conectando...</span></div>
+                <h3 class="widget-title">Estadísticas Live</h3>
+                <div id="liveStats">
+                    <div style="margin-bottom: 8px;">📊 Total: <span id="sidebarTotal">0</span> artículos</div>
+                    <div style="margin-bottom: 8px;">🔍 Visibles: <span id="sidebarVisible">0</span></div>
+                    <div style="margin-bottom: 8px;">⏱️ Tiempo resp: <span id="responseTime">-</span>ms</div>
+                    <div>🔄 Últ. sync: <span id="lastSync">-</span></div>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title">Controles</h3>
+                <div>
+                    <button onclick="checkHealth()" style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 5px;">🩺 Check Salud</button>
+                    <button onclick="clearSearch()" style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 5px;">🗑️ Limpiar Búsqueda</button>
+                    <button onclick="showApiInfo()" style="background: #fd7e14; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: 100%;">📋 Info API</button>
                 </div>
             </div>
         </aside>
@@ -419,85 +476,79 @@
     <script>
         let allNews = [];
         let filteredNews = [];
+        let apiBaseUrl = 'http://localhost:3000'; // Cambiar por tu dominio en producción
 
-        // Función para parsear RSS XML
-        function parseRSS(xmlText) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-            const items = xmlDoc.querySelectorAll('item');
+        // Función para obtener noticias del backend
+        async function fetchNewsFromBackend(forceRefresh = false) {
+            const startTime = Date.now();
             
-            return Array.from(items).map((item, index) => {
-                const title = item.querySelector('title')?.textContent || 'Sin título';
-                const description = item.querySelector('description')?.textContent || '';
-                const link = item.querySelector('link')?.textContent || '#';
-                const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
-                const category = item.querySelector('category')?.textContent || '';
-                
-                // Limpiar HTML de la descripción
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = description;
-                const cleanDescription = tempDiv.textContent || tempDiv.innerText || '';
-                
-                // Extraer resumen (primeras 200 caracteres)
-                const summary = cleanDescription.length > 200 
-                    ? cleanDescription.substring(0, 200) + '...'
-                    : cleanDescription;
-                
-                return {
-                    id: index,
-                    title: title.trim(),
-                    summary: summary,
-                    content: cleanDescription,
-                    source: 'Página 12',
-                    sourceUrl: link,
-                    date: new Date(pubDate),
-                    category: category,
-                    readTime: Math.max(1, Math.ceil(cleanDescription.split(' ').length / 200)) + ' min'
-                };
-            });
-        }
-
-        // Función para obtener RSS de Página 12
-        async function fetchPagina12RSS() {
             try {
-                document.getElementById('connectionStatus').textContent = 'Conectando...';
+                const endpoint = forceRefresh ? '/api/news/refresh' : '/api/news';
+                const method = forceRefresh ? 'POST' : 'GET';
                 
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.pagina12.com.ar/rss/secciones/economia/notas')}`;
-                const response = await fetch(proxyUrl);
-                
+                const response = await fetch(apiBaseUrl + endpoint, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const responseTime = Date.now() - startTime;
+                document.getElementById('responseTime').textContent = responseTime;
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+
+                const result = await response.json();
                 
-                const data = await response.json();
-                const parsedNews = parseRSS(data.contents);
+                if (!result.success) {
+                    throw new Error(result.error || 'Error desconocido del servidor');
+                }
+
+                // Actualizar estado
+                updateConnectionStatus(true);
+                document.getElementById('backendStatus').innerHTML = '<span style="color: #28a745;">✅ Conectado</span>';
                 
-                document.getElementById('connectionStatus').textContent = 'Conectado ✅';
-                return parsedNews.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
+                return result;
+
             } catch (error) {
-                console.error('Error fetching RSS:', error);
-                document.getElementById('connectionStatus').textContent = 'Error ❌';
+                console.error('Error fetching from backend:', error);
+                updateConnectionStatus(false);
+                document.getElementById('backendStatus').innerHTML = '<span style="color: #dc3545;">❌ Error</span>';
                 throw error;
             }
         }
 
         // Función para cargar noticias
-        async function loadNews() {
+        async function loadNews(forceRefresh = false) {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('newsGrid').style.display = 'none';
             document.getElementById('newsStats').style.display = 'none';
             
             try {
-                allNews = await fetchPagina12RSS();
-                filteredNews = [...allNews];
-                displayNews();
-                updateStats();
+                const result = await fetchNewsFromBackend(forceRefresh);
                 
+                allNews = result.data;
+                filteredNews = [...allNews];
+                
+                displayNews();
+                updateStats(result);
+                
+                // Mostrar mensaje si fue refresh manual
+                if (forceRefresh && result.data.length > 0) {
+                    showMessage(`Noticias actualizadas: ${result.data.length} artículos`, 'success');
+                }
+
             } catch (error) {
                 console.error('Error cargando noticias:', error);
+                showMessage('Error conectando con el backend: ' + error.message, 'error');
                 document.getElementById('newsGrid').innerHTML = 
-                    '<div class="error-message">Error cargando noticias de Página 12. Verifique su conexión e intente nuevamente.</div>';
+                    `<div class="error-message">
+                        <strong>Error de conexión</strong><br>
+                        No se pudo conectar con el servidor backend.<br>
+                        Asegúrate de que el servidor esté ejecutándose en ${apiBaseUrl}
+                    </div>`;
             } finally {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('newsGrid').style.display = 'grid';
@@ -528,151 +579,10 @@
                     
                     <div class="news-content" id="content-${news.id}">
                         <div class="news-full-text">
-                            ${news.content.split('\n').map(paragraph => paragraph.trim() ? `<p>${paragraph}</p>` : '').join('')}
+                            <p>${news.content}</p>
                         </div>
                         
                         <div class="news-actions">
-                            <span class="news-action">
-                                📖 ${news.readTime} de lectura
-                            </span>
-                            <span class="news-action" onclick="shareNews('${news.title.replace(/'/g, "\\'")}')">
-                                🔗 Compartir
-                            </span>
-                            <span class="news-action" onclick="openSourceUrl('${news.sourceUrl}')">
-                                🌐 Ver en Página 12
-                            </span>
-                            ${news.category ? `<span class="news-action">🏷️ ${news.category}</span>` : ''}
-                        </div>
-                    </div>
-                </article>
-            `).join('');
-        }
-
-        // Función para expandir/contraer contenido
-        function toggleNewsContent(newsId) {
-            const content = document.getElementById(`content-${newsId}`);
-            const icon = document.getElementById(`icon-${newsId}`);
-            const newsItem = document.getElementById(`news-${newsId}`);
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                icon.classList.remove('rotated');
-                icon.textContent = '▼';
-                newsItem.classList.remove('expanded');
-            } else {
-                // Cerrar otras noticias abiertas
-                document.querySelectorAll('.news-content.show').forEach(item => {
-                    item.classList.remove('show');
-                });
-                document.querySelectorAll('.expand-icon.rotated').forEach(item => {
-                    item.classList.remove('rotated');
-                    item.textContent = '▼';
-                });
-                document.querySelectorAll('.news-item.expanded').forEach(item => {
-                    item.classList.remove('expanded');
-                });
-                
-                // Abrir la noticia seleccionada
-                content.classList.add('show');
-                icon.classList.add('rotated');
-                icon.textContent = '▲';
-                newsItem.classList.add('expanded');
-                
-                // Scroll suave hacia la noticia expandida
-                newsItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        // Función para buscar noticias
-        function searchNews() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (!query) {
-                filteredNews = [...allNews];
-            } else {
-                filteredNews = allNews.filter(news => 
-                    news.title.toLowerCase().includes(query) || 
-                    news.summary.toLowerCase().includes(query) ||
-                    news.content.toLowerCase().includes(query) ||
-                    (news.category && news.category.toLowerCase().includes(query))
-                );
-            }
-            
-            displayNews();
-            updateStats();
-        }
-
-        // Función para actualizar estadísticas
-        function updateStats() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('es-ES', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            document.getElementById('totalNews').textContent = allNews.length;
-            document.getElementById('lastUpdate').textContent = timeString;
-            document.getElementById('sidebarTotal').textContent = allNews.length;
-            document.getElementById('sidebarVisible').textContent = filteredNews.length;
-        }
-
-        // Función para formatear fecha
-        function formatDate(date) {
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // Función para abrir URL de la fuente
-        function openSourceUrl(url) {
-            if (url && url !== '#') {
-                window.open(url, '_blank', 'noopener,noreferrer');
-            }
-        }
-
-        // Función para compartir noticia
-        function shareNews(title) {
-            if (navigator.share) {
-                navigator.share({
-                    title: title,
-                    text: 'Lee esta noticia en InfoMercado',
-                    url: window.location.href
-                });
-            } else {
-                navigator.clipboard.writeText(`${title} - ${window.location.href}`)
-                    .then(() => alert('Noticia copiada al portapapeles'))
-                    .catch(() => alert('No se pudo compartir la noticia'));
-            }
-        }
-
-        // Event listeners
-        document.getElementById('searchInput').addEventListener('input', function() {
-            if (this.value.trim() === '') {
-                filteredNews = [...allNews];
-                displayNews();
-                updateStats();
-            }
-        });
-
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchNews();
-            }
-        });
-
-        // Cargar noticias al inicio
-        window.addEventListener('load', function() {
-            loadNews();
-        });
-
-        // Actualizar noticias cada 10 minutos
-        setInterval(function() {
-            loadNews();
-        }, 600000);
-    </script>
-</body>
-</html>
+                            <span class="news-action">📖 ${news.readTime} de lectura</span>
+                            <span class="news-action" onclick="shareNews('${news.title.replace(/'/g, "\\'")}')">🔗 Compartir</span>
+                            <span class="news-action" onclick="openSourceUrl('${
