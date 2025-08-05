@@ -1,0 +1,37 @@
+{
+  "name": "infomercado-rss-vercel",
+  "version": "1.0.0",
+  "description": "InfoMercado RSS - Noticias de Página 12 en Vercel",
+  "main": "api/news.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7",
+    "xmldom": "^0.6.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "keywords": [
+    "rss",
+    "news",
+    "pagina12",
+    "economia",
+    "vercel",
+    "serverless",
+    "infomercado"
+  ],
+  "author": "InfoMercado Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/infomercado-rss.git"
+  }
+}
