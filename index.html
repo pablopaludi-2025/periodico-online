@@ -655,23 +655,281 @@
             displayNews();
         }
 
-        // Función para cargar noticias reales
-        async function loadNews() {
+        // Función para cargar noticias
+        function loadNews() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('newsGrid').style.display = 'none';
             
-            try {
-                // Simulación - en implementación real usar API
-                setTimeout(() => {
-                    if (currentSection === 'todas') {
-                        allNews = Object.values(mockNews).flat();
-                    } else {
-                        allNews = mockNews[currentSection] || [];
-                    }
+            // Simulación - en implementación real usar API
+            setTimeout(() => {
+                if (currentSection === 'todas') {
+                    allNews = Object.values(mockNews).flat();
+                } else {
+                    allNews = mockNews[currentSection] || [];
+                }
+                
+                displayNews();
+                updateLastUpdated();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('newsGrid').style.display = 'grid';
+            }, 1000);
+        }
+
+        // Función para mostrar noticias
+        function displayNews() {
+            const newsGrid = document.getElementById('newsGrid');
+            let filteredNews = allNews;
+            
+            // Filtrar por país si no es 'all'
+            if (currentCountryFilter !== 'all') {
+                filteredNews = allNews.filter(news => 
+                    news.country === currentCountryFilter || 
+                    (currentCountryFilter === 'europa' && news.country === 'europa')
+                );
+            }
+            
+            if (filteredNews.length === 0) {
+                newsGrid.innerHTML = '<div class="error-message">No hay noticias disponibles para los filtros seleccionados.</div>';
+                return;
+            }
+            
+            newsGrid.innerHTML = filteredNews.map((news, index) => `
+                <article class="news-item" id="news-${index}">
+                    <div class="news-meta">
+                        <span class="news-source" onclick="openSourceUrl('${news.sourceUrl || '#'}')">${news.source}</span>
+                        <span>${formatDate(news.date)}</span>
+                    </div>
+                    <h3 class="news-title" onclick="toggleNewsContent(${index})">
+                        ${news.title}
+                        <span class="expand-icon" id="icon-${index}">▼</span>
+                    </h3>
+                    <p class="news-summary">${news.summary}</p>
                     
-                    displayNews();
-                    updateLastUpdated();
-                    
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('newsGrid').style.display = 'grid';
-                }, 1000);
+                    <div class="news-content" id="content-${index}">
+                        <div class="news-tags">
+                            ${news.tags ? news.tags.map(tag => `<span class="news-tag">${tag}</span>`).join('') : ''}
+                        </div>
+                        
+                        <div class="news-full-text">
+                            ${news.content ? news.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('') : ''}
+                        </div>
+                        
+                        <div class="news-actions">
+                            <span class="news-action">
+                                📖 ${news.readTime || '2 min'} de lectura
+                            </span>
+                            <span class="news-action" onclick="shareNews('${news.title}')">
+                                🔗 Compartir
+                            </span>
+                            <span class="news-action" onclick="saveNews(${index})">
+                                ⭐ Guardar
+                            </span>
+                            <span class="news-action" onclick="openSourceUrl('${news.sourceUrl || '#'}')">
+                                🌐 Ver original
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        // Función para expandir/contraer contenido de noticia
+        function toggleNewsContent(index) {
+            const content = document.getElementById(`content-${index}`);
+            const icon = document.getElementById(`icon-${index}`);
+            const newsItem = document.getElementById(`news-${index}`);
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                icon.classList.remove('rotated');
+                icon.textContent = '▼';
+                newsItem.classList.remove('expanded');
+            } else {
+                // Cerrar otras noticias abiertas
+                document.querySelectorAll('.news-content.show').forEach(item => {
+                    item.classList.remove('show');
+                });
+                document.querySelectorAll('.expand-icon.rotated').forEach(item => {
+                    item.classList.remove('rotated');
+                    item.textContent = '▼';
+                });
+                document.querySelectorAll('.news-item.expanded').forEach(item => {
+                    item.classList.remove('expanded');
+                });
+                
+                // Abrir la noticia seleccionada
+                content.classList.add('show');
+                icon.classList.add('rotated');
+                icon.textContent = '▲';
+                newsItem.classList.add('expanded');
+                
+                // Scroll suave hacia la noticia expandida
+                newsItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Función para abrir URL de la fuente original
+        function openSourceUrl(url) {
+            if (url && url !== '#') {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            } else {
+                alert('URL de la fuente no disponible en la demo');
+            }
+        }
+
+        // Función para buscar noticias
+        function searchNews() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if (!query) return;
+            
+            const filteredNews = allNews.filter(news => 
+                news.title.toLowerCase().includes(query) || 
+                news.summary.toLowerCase().includes(query)
+            );
+            
+            if (filteredNews.length === 0) {
+                document.getElementById('newsGrid').innerHTML = 
+                    '<div class="error-message">No se encontraron noticias para la búsqueda: ' + query + '</div>';
+            } else {
+                document.getElementById('newsGrid').innerHTML = filteredNews.map((news, index) => `
+                    <article class="news-item" id="search-news-${index}">
+                        <div class="news-meta">
+                            <span class="news-source" onclick="openSourceUrl('${news.sourceUrl || '#'}')">${news.source}</span>
+                            <span>${formatDate(news.date)}</span>
+                        </div>
+                        <h3 class="news-title" onclick="toggleSearchNewsContent(${index})">
+                            ${news.title}
+                            <span class="expand-icon" id="search-icon-${index}">▼</span>
+                        </h3>
+                        <p class="news-summary">${news.summary}</p>
+                        
+                        <div class="news-content" id="search-content-${index}">
+                            <div class="news-tags">
+                                ${news.tags ? news.tags.map(tag => `<span class="news-tag">${tag}</span>`).join('') : ''}
+                            </div>
+                            
+                            <div class="news-full-text">
+                                ${news.content ? news.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('') : ''}
+                            </div>
+                            
+                            <div class="news-actions">
+                                <span class="news-action">
+                                    📖 ${news.readTime || '2 min'} de lectura
+                                </span>
+                                <span class="news-action" onclick="shareNews('${news.title}')">
+                                    🔗 Compartir
+                                </span>
+                                <span class="news-action" onclick="saveNews(${index})">
+                                    ⭐ Guardar
+                                </span>
+                                <span class="news-action" onclick="openSourceUrl('${news.sourceUrl || '#'}')">
+                                    🌐 Ver original
+                                </span>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            }
+        }
+
+        // Función para expandir/contraer contenido en búsqueda
+        function toggleSearchNewsContent(index) {
+            const content = document.getElementById(`search-content-${index}`);
+            const icon = document.getElementById(`search-icon-${index}`);
+            const newsItem = document.getElementById(`search-news-${index}`);
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                icon.classList.remove('rotated');
+                icon.textContent = '▼';
+                newsItem.classList.remove('expanded');
+            } else {
+                // Cerrar otras noticias abiertas
+                document.querySelectorAll('.news-content.show').forEach(item => {
+                    item.classList.remove('show');
+                });
+                document.querySelectorAll('.expand-icon.rotated').forEach(item => {
+                    item.classList.remove('rotated');
+                    item.textContent = '▼';
+                });
+                document.querySelectorAll('.news-item.expanded').forEach(item => {
+                    item.classList.remove('expanded');
+                });
+                
+                // Abrir la noticia seleccionada
+                content.classList.add('show');
+                icon.classList.add('rotated');
+                icon.textContent = '▲';
+                newsItem.classList.add('expanded');
+                
+                // Scroll suave hacia la noticia expandida
+                newsItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Función para formatear fecha
+        function formatDate(date) {
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Función para compartir noticia
+        function shareNews(title) {
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: 'Lee esta noticia en InfoMercado',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback para navegadores sin soporte
+                navigator.clipboard.writeText(window.location.href + ' - ' + title)
+                    .then(() => alert('Enlace copiado al portapapeles'))
+                    .catch(() => alert('No se pudo copiar el enlace'));
+            }
+        }
+
+        // Función para guardar noticia
+        function saveNews(index) {
+            // En implementación real, esto guardaría en base de datos o localStorage
+            alert('Noticia guardada en favoritos (función de demo)');
+        }
+
+        // Función para actualizar "última actualización"
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').innerHTML = `
+                <div style="font-size: 0.9rem; color: #666;">
+                    Última actualización:<br>
+                    ${formatDate(now)}
+                </div>
+            `;
+        }
+
+        // Búsqueda con Enter
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchNews();
+            }
+        });
+
+        // Cargar noticias al inicio
+        window.addEventListener('load', function() {
+            loadNews();
+        });
+
+        // Actualizar noticias cada 12 horas (simulado cada 30 segundos para demo)
+        setInterval(function() {
+            if (Math.random() > 0.7) { // Simular actualización ocasional
+                loadNews();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
