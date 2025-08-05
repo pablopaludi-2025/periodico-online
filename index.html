@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfoMercado - Periódico Online</title>
+    <title>InfoMercado - Noticias Económicas en Tiempo Real</title>
+    <meta name="description" content="Agregador de noticias económicas de Página 12 con tecnología serverless en Vercel">
+    <meta name="keywords" content="economia, noticias, argentina, pagina12, infomercado, rss, tiempo real">
+    <meta name="author" content="InfoMercado Team">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://infomercado-rss.vercel.app/">
+    <meta property="og:title" content="InfoMercado - Noticias Económicas">
+    <meta property="og:description" content="Noticias económicas de Página 12 en tiempo real">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="InfoMercado - Noticias Económicas">
+    <meta property="twitter:description" content="Noticias económicas de Página 12 en tiempo real">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📰</text></svg>">
+    
     <style>
         * {
             margin: 0;
@@ -62,6 +80,8 @@
             border-radius: 25px;
             min-width: 300px;
             font-size: 14px;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .search-btn {
@@ -71,48 +91,18 @@
             border: none;
             border-radius: 25px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            font-weight: 500;
         }
 
         .search-btn:hover {
             background: #e55a2b;
-        }
-
-        .nav {
-            background: #fff;
-            padding: 15px 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-menu {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-
-        .nav-item {
-            padding: 10px 20px;
-            background: #f8f9fa;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            font-weight: 500;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: #2a5298;
-            color: white;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 1fr 320px;
             gap: 30px;
             margin: 30px auto;
             max-width: 1200px;
@@ -132,6 +122,40 @@
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 3px solid #ff6b35;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .refresh-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .news-grid {
@@ -141,7 +165,7 @@
 
         .news-item {
             border: 1px solid #e9ecef;
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 20px;
             transition: all 0.3s;
             background: #fff;
@@ -149,24 +173,28 @@
         }
 
         .news-item:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+            border-color: #2a5298;
         }
 
         .news-item.expanded {
             border-color: #2a5298;
-            box-shadow: 0 8px 25px rgba(42, 82, 152, 0.15);
+            box-shadow: 0 10px 30px rgba(42, 82, 152, 0.15);
+            transform: translateY(-2px);
         }
 
         .news-title {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: #2a5298;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             cursor: pointer;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
+            gap: 15px;
+            line-height: 1.4;
         }
 
         .news-title:hover {
@@ -177,6 +205,8 @@
             font-size: 1rem;
             transition: transform 0.3s;
             color: #666;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
         .expand-icon.rotated {
@@ -185,8 +215,9 @@
 
         .news-summary {
             color: #666;
-            margin-bottom: 10px;
-            line-height: 1.5;
+            margin-bottom: 12px;
+            line-height: 1.6;
+            font-size: 0.95rem;
         }
 
         .news-content {
@@ -194,7 +225,7 @@
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #eee;
-            animation: slideDown 0.3s ease-out;
+            animation: slideDown 0.4s ease-out;
         }
 
         .news-content.show {
@@ -205,29 +236,15 @@
             color: #444;
             line-height: 1.7;
             margin-bottom: 15px;
-        }
-
-        .news-tags {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .news-tag {
-            background: #f8f9fa;
-            color: #495057;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            border: 1px solid #dee2e6;
+            font-size: 0.95rem;
         }
 
         .news-actions {
             display: flex;
             gap: 15px;
             align-items: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
         }
 
         .news-action {
@@ -238,20 +255,26 @@
             align-items: center;
             gap: 5px;
             transition: color 0.3s;
+            padding: 4px 8px;
+            border-radius: 15px;
+            background: #f8f9fa;
         }
 
         .news-action:hover {
             color: #2a5298;
+            background: #e3f2fd;
         }
 
         @keyframes slideDown {
             0% {
                 opacity: 0;
                 max-height: 0;
+                transform: translateY(-10px);
             }
             100% {
                 opacity: 1;
-                max-height: 500px;
+                max-height: 1000px;
+                transform: translateY(0);
             }
         }
 
@@ -260,26 +283,30 @@
             justify-content: space-between;
             font-size: 0.85rem;
             color: #888;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .news-source {
-            background: #e3f2fd;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
             color: #1976d2;
-            padding: 3px 8px;
-            border-radius: 12px;
+            padding: 4px 12px;
+            border-radius: 15px;
             font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
             display: inline-block;
+            font-weight: 500;
         }
 
         .news-source:hover {
-            background: #1976d2;
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
             color: white;
             transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(25, 118, 210, 0.3);
+            box-shadow: 0 3px 8px rgba(25, 118, 210, 0.3);
         }
 
         .sidebar {
@@ -293,30 +320,25 @@
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .widget:hover {
+            transform: translateY(-2px);
         }
 
         .widget-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             color: #2a5298;
             margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 2px solid #ff6b35;
-        }
-
-        .trending-item {
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .trending-item:hover {
-            color: #2a5298;
+            font-weight: 600;
         }
 
         .loading {
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
             color: #666;
         }
 
@@ -324,10 +346,10 @@
             border: 3px solid #f3f3f3;
             border-top: 3px solid #2a5298;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -335,60 +357,208 @@
             100% { transform: rotate(360deg); }
         }
 
-        .filters {
+        .error-message {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .stats {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #666;
             flex-wrap: wrap;
         }
 
-        .filter-btn {
-            padding: 8px 15px;
+        .stat-item {
             background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 15px;
             border: 1px solid #dee2e6;
-            border-radius: 20px;
-            cursor: pointer;
+            font-weight: 500;
             transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .stat-item.cached {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .stat-item.fresh {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+        }
+
+        .status-offline {
+            background: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+        }
+
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
             font-size: 0.9rem;
         }
 
-        .filter-btn.active {
-            background: #2a5298;
-            color: white;
-            border-color: #2a5298;
+        .btn:hover {
+            background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(19, 132, 150, 0.3);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .widget-content {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .widget-list-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .widget-list-item:last-child {
+            border-bottom: none;
         }
 
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
+                margin: 20px auto;
+                padding: 0 15px;
             }
             
             .header-content {
                 flex-direction: column;
                 text-align: center;
+                gap: 15px;
             }
             
             .search-input {
                 min-width: 250px;
             }
-            
-            .nav-menu {
-                gap: 15px;
+
+            .logo {
+                font-size: 2rem;
             }
-            
-            .nav-item {
-                padding: 8px 15px;
-                font-size: 0.9rem;
+
+            .section-title {
+                font-size: 1.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats {
+                gap: 8px;
+            }
+
+            .stat-item {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+
+            .news-title {
+                font-size: 1.1rem;
+            }
+
+            .news-actions {
+                gap: 10px;
             }
         }
 
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border: 1px solid #f5c6cb;
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .search-input {
+                min-width: 200px;
+            }
+
+            .news-section, .widget {
+                padding: 15px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
     </style>
 </head>
@@ -397,44 +567,39 @@
         <div class="container">
             <div class="header-content">
                 <div>
-                    <div class="logo">InfoMercado</div>
-                    <div class="tagline">Noticias de Política, Economía, Energía y Minería</div>
+                    <div class="logo">📰 InfoMercado</div>
+                    <div class="tagline">Noticias Económicas en Tiempo Real | Powered by Vercel</div>
                 </div>
                 <div class="search-container">
                     <input type="text" class="search-input" placeholder="Buscar noticias..." id="searchInput">
-                    <button class="search-btn" onclick="searchNews()">Buscar</button>
+                    <button class="search-btn" onclick="searchNews()">🔍 Buscar</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <nav class="nav">
-        <div class="container">
-            <div class="nav-menu">
-                <div class="nav-item active" onclick="showSection('politica')">Política</div>
-                <div class="nav-item" onclick="showSection('economia')">Economía</div>
-                <div class="nav-item" onclick="showSection('energia')">Oil & Gas</div>
-                <div class="nav-item" onclick="showSection('mineria')">Minería</div>
-                <div class="nav-item" onclick="showSection('internacional')">Internacional</div>
-                <div class="nav-item" onclick="showSection('todas')">Todas</div>
-            </div>
-        </div>
-    </nav>
-
     <div class="main-content">
         <main class="news-section">
-            <div class="filters">
-                <div class="filter-btn active" onclick="filterByCountry('all')">Todos los países</div>
-                <div class="filter-btn" onclick="filterByCountry('argentina')">Argentina</div>
-                <div class="filter-btn" onclick="filterByCountry('usa')">EE.UU.</div>
-                <div class="filter-btn" onclick="filterByCountry('europa')">Europa</div>
-            </div>
+            <h2 class="section-title">
+                <div class="title-main">
+                    <span id="connectionStatus">
+                        <span class="status-indicator status-loading"></span>
+                        Noticias de Economía
+                    </span>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshNews()">🔄 Actualizar</button>
+            </h2>
             
-            <h2 class="section-title" id="sectionTitle">Noticias de Política</h2>
+            <div class="stats" id="newsStats" style="display: none;">
+                <div class="stat-item" id="totalStat">📰 <span id="totalNews">0</span> noticias</div>
+                <div class="stat-item" id="updateStat">🕒 <span id="lastUpdate">-</span></div>
+                <div class="stat-item" id="cacheStat">💾 <span id="cacheStatus">-</span></div>
+            </div>
             
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                Cargando noticias...
+                <strong>Conectando con la API...</strong><br>
+                <small>Obteniendo noticias de Página 12</small>
             </div>
             
             <div class="news-grid" id="newsGrid" style="display: none;">
@@ -444,492 +609,242 @@
 
         <aside class="sidebar">
             <div class="widget">
-                <h3 class="widget-title">Últimas Actualizaciones</h3>
-                <div id="lastUpdated">Cargando...</div>
-            </div>
-
-            <div class="widget">
-                <h3 class="widget-title">Tendencias</h3>
-                <div id="trending">
-                    <div class="trending-item">Política energética argentina</div>
-                    <div class="trending-item">Precios del petróleo</div>
-                    <div class="trending-item">Inversiones mineras</div>
-                    <div class="trending-item">Mercados financieros</div>
-                    <div class="trending-item">Regulaciones ambientales</div>
+                <h3 class="widget-title">🚀 Estado del Sistema</h3>
+                <div class="widget-content">
+                    <div class="widget-list-item">🌐 <strong>Plataforma:</strong> Vercel Serverless</div>
+                    <div class="widget-list-item">📡 <strong>API:</strong> <span id="apiEndpoint">/api/news</span></div>
+                    <div class="widget-list-item">📰 <strong>Fuente:</strong> Página 12 Economía</div>
+                    <div class="widget-list-item">💾 <strong>Cache:</strong> 10 minutos</div>
+                    <div class="widget-list-item">⚡ <strong>Estado:</strong> <span id="backendStatus">Conectando...</span></div>
                 </div>
             </div>
 
             <div class="widget">
-                <h3 class="widget-title">Fuentes</h3>
-                <div id="sources">
-                    <div style="margin-bottom: 10px;">🇦🇷 Argentina: Télam, Ámbito, Cronista</div>
-                    <div style="margin-bottom: 10px;">🇺🇸 EE.UU.: Reuters, Bloomberg, WSJ</div>
-                    <div style="margin-bottom: 10px;">🇪🇺 Europa: EuroNews, Financial Times</div>
-                    <div style="margin-bottom: 10px;">⚡ Energía: Oil & Gas Journal</div>
-                    <div>⛏️ Minería: Mining.com</div>
+                <h3 class="widget-title">📊 Estadísticas Live</h3>
+                <div class="widget-content">
+                    <div class="widget-list-item">📄 Total: <strong><span id="sidebarTotal">0</span></strong> artículos</div>
+                    <div class="widget-list-item">🔍 Visibles: <strong><span id="sidebarVisible">0</span></strong></div>
+                    <div class="widget-list-item">⏱️ Respuesta: <strong><span id="responseTime">-</span>ms</strong></div>
+                    <div class="widget-list-item">🔄 Últ. sync: <strong><span id="lastSync">-</span></strong></div>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title">🛠️ Controles</h3>
+                <div>
+                    <button class="btn" onclick="checkHealth()">🩺 Check Salud API</button>
+                    <button class="btn" onclick="clearSearch()">🗑️ Limpiar Búsqueda</button>
+                    <button class="btn" onclick="showApiInfo()">📋 Info Técnica</button>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title">✨ Funcionalidades</h3>
+                <div class="widget-content">
+                    <div class="widget-list-item">✅ Serverless Functions</div>
+                    <div class="widget-list-item">✅ Cache inteligente</div>
+                    <div class="widget-list-item">✅ Sin restricciones CORS</div>
+                    <div class="widget-list-item">✅ CDN global</div>
+                    <div class="widget-list-item">✅ Deploy automático</div>
+                    <div class="widget-list-item">✅ HTTPS incluido</div>
+                    <div class="widget-list-item">✅ Responsive design</div>
                 </div>
             </div>
         </aside>
     </div>
 
     <script>
-        // Simulación de fuentes RSS (en implementación real, estas serían URLs reales)
-        const rssSources = {
-            politica: {
-                argentina: [
-                    'https://www.telam.com.ar/rss2/politica.xml',
-                    'https://www.ambito.com/contenidos/politica.rss'
-                ],
-                internacional: [
-                    'https://feeds.reuters.com/reuters/politicsNews',
-                    'https://feeds.bloomberg.com/politics/news.rss'
-                ]
-            },
-            economia: {
-                argentina: [
-                    'https://www.cronista.com/rss/economia/',
-                    'https://www.ambito.com/contenidos/economia.rss'
-                ],
-                internacional: [
-                    'https://feeds.reuters.com/reuters/businessNews',
-                    'https://feeds.ft.com/rss/home/uk'
-                ]
-            },
-            energia: [
-                'https://www.ogj.com/rss.xml',
-                'https://www.petroleum-economist.com/rss.xml'
-            ],
-            mineria: [
-                'https://www.mining.com/rss/',
-                'https://www.mining-journal.com/rss.xml'
-            ]
-        };
-
-        // Datos simulados de noticias con contenido completo
-        const mockNews = {
-            politica: [
-                {
-                    title: "Nueva política energética presenta cambios significativos",
-                    summary: "El gobierno anuncia modificaciones en la regulación del sector energético que impactarán en las inversiones futuras...",
-                    content: "El Ministerio de Energía presentó hoy un paquete integral de reformas que busca modernizar el marco regulatorio del sector energético nacional. Las nuevas medidas incluyen incentivos fiscales para inversiones en energías renovables, simplificación de trámites para proyectos de exploración y un nuevo esquema de precios para el gas natural.\n\nSegún el ministro, estas reformas tienen como objetivo atraer inversión extranjera directa por un monto estimado de 15.000 millones de dólares en los próximos cinco años. Las empresas del sector han recibido positivamente el anuncio, especialmente aquellas enfocadas en el desarrollo de Vaca Muerta.\n\nLa implementación comenzará en el primer trimestre del próximo año, con una fase piloto en tres provincias productoras. Los analistas consideran que estas medidas podrían incrementar la producción nacional en un 25% para 2028.",
-                    tags: ["Energía", "Política", "Inversiones", "Vaca Muerta"],
-                    source: "Télam",
-                    sourceUrl: "https://www.telam.com.ar/notas/202508/energia-politica-vaca-muerta-inversiones.html",
-                    country: "argentina",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "3 min"
-                },
-                {
-                    title: "Debates parlamentarios sobre reforma tributaria",
-                    summary: "Los legisladores analizan propuestas que afectarían al sector minero y energético en la próxima sesión...",
-                    content: "La Comisión de Presupuesto del Congreso Nacional debate una serie de modificaciones al régimen tributario que tendrán impacto directo en las industrias extractivas. La propuesta principal contempla una reducción del 15% en el impuesto a las ganancias para empresas que inviertan en tecnología verde.\n\nLos representantes del sector minero han expresado su conformidad con las medidas, mientras que algunos legisladores de la oposición cuestionan el impacto fiscal de estas reducciones. El diputado informante aseguró que las pérdidas en recaudación serán compensadas con el incremento en la actividad económica.\n\nLa votación está programada para la próxima semana, y se espera que cuente con el apoyo de la mayoría oficialista. De aprobarse, las nuevas alícuotas entrarían en vigencia a partir del 1 de enero del próximo año.",
-                    tags: ["Tributario", "Congreso", "Minería", "Tecnología Verde"],
-                    source: "Ámbito",
-                    sourceUrl: "https://www.ambito.com/economia/reforma-tributaria-mineria-congreso-n5834567",
-                    country: "argentina", 
-                    date: new Date(),
-                    url: "#",
-                    readTime: "2 min"
-                }
-            ],
-            economia: [
-                {
-                    title: "Índices bursátiles muestran volatilidad por commodities",
-                    summary: "Los mercados reaccionan a las fluctuaciones en los precios del petróleo y minerales estratégicos...",
-                    content: "Las principales bolsas del mundo registraron una jornada de alta volatilidad debido a las fluctuaciones en los precios de las materias primas. El petróleo WTI cerró con una baja del 2,3%, mientras que el cobre experimentó su mayor caída en tres semanas.\n\nLos analistas atribuyen esta volatilidad a las tensiones geopolíticas en el Medio Oriente y a las preocupaciones sobre la demanda china. El oro, tradicionalmente considerado refugio de valor, subió un 1,8% y alcanzó un nuevo máximo histórico de $2.350 la onza.\n\nEn el mercado local, el índice Merval cayó 1,5%, liderado por las acciones de YPF (-3,2%) y Pampa Energía (-2,8%). Los bonos soberanos también registraron bajas, con el riesgo país superando los 800 puntos básicos.",
-                    tags: ["Bolsa", "Commodities", "Petróleo", "Oro", "Merval"],
-                    source: "El Cronista",
-                    sourceUrl: "https://www.cronista.com/mercados/indices-bursatiles-volatilidad-commodities-n3749582",
-                    country: "argentina",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "4 min"
-                },
-                {
-                    title: "Fed analiza impacto de precios energéticos en inflación",
-                    summary: "La Reserva Federal evalúa cómo los costos de energía afectan las proyecciones económicas...",
-                    content: "La Reserva Federal de Estados Unidos está evaluando cómo el reciente incremento en los precios energéticos podría afectar su política monetaria. En las últimas semanas, el precio del gas natural subió 15% y la gasolina aumentó 8 centavos por galón.\n\nEl presidente de la Fed indicó que estos incrementos son 'temporales' pero reconoció que podrían influir en las decisiones sobre tasas de interés. Los mercados esperan que la próxima reunión del FOMC mantenga las tasas sin cambios.\n\nLos economistas del sector privado ajustaron sus proyecciones de inflación al alza, estimando que el índice PCE podría cerrar el año en 2,8%, por encima del objetivo del 2% de la Fed.",
-                    tags: ["Fed", "Inflación", "Energía", "Tasas", "FOMC"],
-                    source: "Reuters",
-                    sourceUrl: "https://www.reuters.com/business/finance/fed-energy-prices-inflation-analysis-2025-08-05/",
-                    country: "usa",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "3 min"
-                }
-            ],
-            energia: [
-                {
-                    title: "Vaca Muerta alcanza nuevo récord de producción",
-                    summary: "La formación no convencional argentina supera expectativas con nuevas técnicas de extracción...",
-                    content: "La producción de petróleo y gas en Vaca Muerta alcanzó un nuevo récord histórico, con 600.000 barriles diarios de crudo y 140 millones de metros cúbicos de gas. Este hito se logró gracias a la implementación de nuevas tecnologías de fractura hidráulica y perforación horizontal.\n\nLas empresas operadoras han invertido más de 8.000 millones de dólares en los últimos dos años, incorporando equipos de última generación y optimizando los procesos productivos. Vista Energy, YPF y Tecpetrol lideran la producción con más del 60% del total extraído.\n\nEl secretario de Energía destacó que estos números posicionan a Argentina como el cuarto productor de shale oil a nivel mundial. Se espera que para 2026 la producción alcance el millón de barriles diarios, lo que permitirá duplicar las exportaciones energéticas.",
-                    tags: ["Vaca Muerta", "Producción", "Shale Oil", "Inversiones"],
-                    source: "Oil & Gas Journal",
-                    sourceUrl: "https://www.ogj.com/unconventional/article/14296742/vaca-muerta-production-record-argentina-shale",
-                    country: "argentina",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "5 min"
-                },
-                {
-                    title: "Inversiones en energías renovables crecen 40%",
-                    summary: "El sector de energías limpias atrae mayor capital internacional por políticas favorables...",
-                    content: "Las inversiones globales en energías renovables registraron un crecimiento del 40% en el primer semestre del año, alcanzando los 180.000 millones de dólares. China lidera con el 35% del total, seguida por Estados Unidos (22%) y la Unión Europea (18%).\n\nLa energía solar fotovoltaica concentró el 45% de las inversiones, mientras que la eólica captó el 30%. Los proyectos de almacenamiento de energía también mostraron un crecimiento significativo, con inversiones que se triplicaron respecto al año anterior.\n\nEn América Latina, Brasil y México lideran la región con proyectos por 12.000 millones de dólares. Argentina aparece en cuarto lugar con inversiones confirmadas por 3.500 millones, principalmente en parques eólicos en la Patagonia.",
-                    tags: ["Renovables", "Inversiones", "Solar", "Eólica", "Almacenamiento"],
-                    source: "Energy News",
-                    sourceUrl: "https://www.energynews.com/renewable-investments-grow-40-percent-global-report",
-                    country: "internacional",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "4 min"
-                }
-            ],
-            mineria: [
-                {
-                    title: "Proyecto de litio en Salta avanza hacia producción",
-                    summary: "Nueva mina de litio promete generar 2000 empleos y aumentar las exportaciones del mineral...",
-                    content: "El proyecto Mariana, ubicado en la Puna salteña, completó la fase de construcción y se prepara para iniciar la producción comercial de carbonato de litio. La inversión total ascendió a 850 millones de dólares y generará 2.000 empleos directos.\n\nLa mina tiene una capacidad de producción de 42.500 toneladas anuales de carbonato de litio equivalente, lo que la posiciona entre las más grandes de Sudamérica. La empresa operadora ya firmó contratos de suministro con fabricantes de baterías de Asia y Europa.\n\nEl gobernador de Salta destacó el impacto económico del proyecto, que incrementará las exportaciones provinciales en 35%. Además, la empresa se comprometió a destinar el 3% de las regalías a programas de desarrollo sustentable en comunidades locales.",
-                    tags: ["Litio", "Salta", "Exportaciones", "Empleos", "Baterías"],
-                    source: "Mining.com",
-                    sourceUrl: "https://www.mining.com/argentina-lithium-project-salta-production-mariana/",
-                    country: "argentina",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "4 min"
-                },
-                {
-                    title: "Precios del cobre alcanzan máximos históricos",
-                    summary: "La demanda global de cobre impulsa los precios mientras la oferta se mantiene limitada...",
-                    content: "El precio del cobre alcanzó los $9.850 por tonelada en la Bolsa de Metales de Londres, estableciendo un nuevo récord histórico. Este incremento del 18% en lo que va del año responde a la fuerte demanda de la industria tecnológica y automotriz.\n\nLa transición hacia vehículos eléctricos ha disparado la demanda del metal rojo, utilizado intensivamente en baterías y sistemas de carga. Analistas estiman que la demanda crecerá 50% en la próxima década, mientras que la oferta enfrenta restricciones por conflictos laborales en Chile y Perú.\n\nLas mineras argentinas se benefician de esta tendencia, especialmente aquellas con proyectos en Catamarca y San Juan. Se espera que las exportaciones de cobre del país aumenten 25% este año, generando divisas por 2.800 millones de dólares.",
-                    tags: ["Cobre", "Precios", "Demanda", "Vehículos Eléctricos", "Exportaciones"],
-                    source: "Mining Journal",
-                    sourceUrl: "https://www.mining-journal.com/copper-prices-historic-highs-global-demand-supply",
-                    country: "internacional",
-                    date: new Date(),
-                    url: "#",
-                    readTime: "3 min"
-                }
-            ]
-        };
-
-        let currentSection = 'politica';
-        let currentCountryFilter = 'all';
         let allNews = [];
+        let filteredNews = [];
+        let apiBaseUrl = window.location.origin;
 
-        // Función para mostrar sección
-        function showSection(section) {
-            currentSection = section;
+        // Función para obtener noticias del backend
+        async function fetchNewsFromBackend(forceRefresh = false) {
+            const startTime = Date.now();
             
-            // Actualizar navegación activa
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Actualizar título
-            const titles = {
-                politica: 'Noticias de Política',
-                economia: 'Economía y Finanzas', 
-                energia: 'Oil & Gas',
-                mineria: 'Minería',
-                internacional: 'Noticias Internacionales',
-                todas: 'Todas las Noticias'
-            };
-            
-            document.getElementById('sectionTitle').textContent = titles[section];
-            
-            loadNews();
-        }
+            try {
+                const endpoint = '/api/news' + (forceRefresh ? '?refresh=true' : '');
+                
+                const response = await fetch(apiBaseUrl + endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-        // Función para filtrar por país
-        function filterByCountry(country) {
-            currentCountryFilter = country;
-            
-            // Actualizar filtros activos
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            displayNews();
+                const responseTime = Date.now() - startTime;
+                document.getElementById('responseTime').textContent = responseTime;
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Error desconocido del servidor');
+                }
+
+                updateConnectionStatus(true);
+                document.getElementById('backendStatus').innerHTML = '<span style="color: #28a745;">✅ Online</span>';
+                
+                return result;
+
+            } catch (error) {
+                console.error('Error fetching from backend:', error);
+                updateConnectionStatus(false);
+                document.getElementById('backendStatus').innerHTML = '<span style="color: #dc3545;">❌ Error</span>';
+                throw error;
+            }
         }
 
         // Función para cargar noticias
-        function loadNews() {
+        async function loadNews(forceRefresh = false) {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('newsGrid').style.display = 'none';
+            document.getElementById('newsStats').style.display = 'none';
             
-            // Simulación - en implementación real usar API
-            setTimeout(() => {
-                if (currentSection === 'todas') {
-                    allNews = Object.values(mockNews).flat();
-                } else {
-                    allNews = mockNews[currentSection] || [];
-                }
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '🔄 Cargando...';
+            
+            try {
+                const result = await fetchNewsFromBackend(forceRefresh);
+                
+                allNews = result.data;
+                filteredNews = [...allNews];
                 
                 displayNews();
-                updateLastUpdated();
+                updateStats(result);
                 
+                if (forceRefresh && result.data.length > 0) {
+                    showMessage(`✅ Noticias actualizadas: ${result.data.length} artículos`, 'success');
+                }
+
+            } catch (error) {
+                console.error('Error cargando noticias:', error);
+                showMessage('❌ Error conectando con la API: ' + error.message, 'error');
+                document.getElementById('newsGrid').innerHTML = 
+                    `<div class="error-message">
+                        <strong>🚨 Error de conexión</strong><br>
+                        No se pudo obtener las noticias desde la API.<br>
+                        <small>Endpoint: ${apiBaseUrl}/api/news</small><br>
+                        <small>Verifica que las Serverless Functions estén activas en Vercel</small>
+                    </div>`;
+            } finally {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('newsGrid').style.display = 'grid';
-            }, 1000);
+                document.getElementById('newsStats').style.display = 'flex';
+                
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '🔄 Actualizar';
+            }
+        }
+
+        // Función para actualizar estado de conexión
+        function updateConnectionStatus(isOnline) {
+            const statusElement = document.getElementById('connectionStatus');
+            const indicator = statusElement.querySelector('.status-indicator');
+            
+            if (isOnline) {
+                indicator.className = 'status-indicator status-online';
+                statusElement.childNodes[2].textContent = 'Noticias de Economía';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                statusElement.childNodes[2].textContent = 'Error de Conexión';
+            }
         }
 
         // Función para mostrar noticias
         function displayNews() {
             const newsGrid = document.getElementById('newsGrid');
-            let filteredNews = allNews;
-            
-            // Filtrar por país si no es 'all'
-            if (currentCountryFilter !== 'all') {
-                filteredNews = allNews.filter(news => 
-                    news.country === currentCountryFilter || 
-                    (currentCountryFilter === 'europa' && news.country === 'europa')
-                );
-            }
             
             if (filteredNews.length === 0) {
-                newsGrid.innerHTML = '<div class="error-message">No hay noticias disponibles para los filtros seleccionados.</div>';
+                newsGrid.innerHTML = `
+                    <div class="no-results">
+                        🔍 No hay noticias que coincidan con su búsqueda.<br>
+                        <small>Intente con otros términos o limpie la búsqueda</small>
+                    </div>
+                `;
                 return;
             }
             
             newsGrid.innerHTML = filteredNews.map((news, index) => `
-                <article class="news-item" id="news-${index}">
+                <article class="news-item" id="news-${news.id}">
                     <div class="news-meta">
-                        <span class="news-source" onclick="openSourceUrl('${news.sourceUrl || '#'}')">${news.source}</span>
-                        <span>${formatDate(news.date)}</span>
+                        <span class="news-source" onclick="openSourceUrl('${news.sourceUrl}')" title="Click para ver artículo original">${news.source}</span>
+                        <span title="Fecha de publicación">${formatDate(news.date)}</span>
                     </div>
-                    <h3 class="news-title" onclick="toggleNewsContent(${index})">
-                        ${news.title}
-                        <span class="expand-icon" id="icon-${index}">▼</span>
+                    <h3 class="news-title" onclick="toggleNewsContent(${news.id})" title="Click para expandir">
+                        <span>${news.title}</span>
+                        <span class="expand-icon" id="icon-${news.id}">▼</span>
                     </h3>
                     <p class="news-summary">${news.summary}</p>
                     
-                    <div class="news-content" id="content-${index}">
-                        <div class="news-tags">
-                            ${news.tags ? news.tags.map(tag => `<span class="news-tag">${tag}</span>`).join('') : ''}
-                        </div>
-                        
+                    <div class="news-content" id="content-${news.id}">
                         <div class="news-full-text">
-                            ${news.content ? news.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('') : ''}
+                            <p>${news.content}</p>
                         </div>
                         
                         <div class="news-actions">
-                            <span class="news-action">
-                                📖 ${news.readTime || '2 min'} de lectura
-                            </span>
-                            <span class="news-action" onclick="shareNews('${news.title}')">
-                                🔗 Compartir
-                            </span>
-                            <span class="news-action" onclick="saveNews(${index})">
-                                ⭐ Guardar
-                            </span>
-                            <span class="news-action" onclick="openSourceUrl('${news.sourceUrl || '#'}')">
-                                🌐 Ver original
-                            </span>
+                            <span class="news-action" title="Tiempo estimado de lectura">📖 ${news.readTime} de lectura</span>
+                            <span class="news-action" onclick="shareNews('${news.title.replace(/'/g, "\\'")}')">🔗 Compartir</span>
+                            <span class="news-action" onclick="openSourceUrl('${news.sourceUrl}')">🌐 Ver en Página 12</span>
+                            ${news.category ? `<span class="news-action" title="Categoría">🏷️ ${news.category}</span>` : ''}
                         </div>
                     </div>
                 </article>
             `).join('');
         }
 
-        // Función para expandir/contraer contenido de noticia
-        function toggleNewsContent(index) {
-            const content = document.getElementById(`content-${index}`);
-            const icon = document.getElementById(`icon-${index}`);
-            const newsItem = document.getElementById(`news-${index}`);
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                icon.classList.remove('rotated');
-                icon.textContent = '▼';
-                newsItem.classList.remove('expanded');
-            } else {
-                // Cerrar otras noticias abiertas
-                document.querySelectorAll('.news-content.show').forEach(item => {
-                    item.classList.remove('show');
-                });
-                document.querySelectorAll('.expand-icon.rotated').forEach(item => {
-                    item.classList.remove('rotated');
-                    item.textContent = '▼';
-                });
-                document.querySelectorAll('.news-item.expanded').forEach(item => {
-                    item.classList.remove('expanded');
-                });
-                
-                // Abrir la noticia seleccionada
-                content.classList.add('show');
-                icon.classList.add('rotated');
-                icon.textContent = '▲';
-                newsItem.classList.add('expanded');
-                
-                // Scroll suave hacia la noticia expandida
-                newsItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        // Función para abrir URL de la fuente original
-        function openSourceUrl(url) {
-            if (url && url !== '#') {
-                window.open(url, '_blank', 'noopener,noreferrer');
-            } else {
-                alert('URL de la fuente no disponible en la demo');
-            }
-        }
-
-        // Función para buscar noticias
-        function searchNews() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            if (!query) return;
-            
-            const filteredNews = allNews.filter(news => 
-                news.title.toLowerCase().includes(query) || 
-                news.summary.toLowerCase().includes(query)
-            );
-            
-            if (filteredNews.length === 0) {
-                document.getElementById('newsGrid').innerHTML = 
-                    '<div class="error-message">No se encontraron noticias para la búsqueda: ' + query + '</div>';
-            } else {
-                document.getElementById('newsGrid').innerHTML = filteredNews.map((news, index) => `
-                    <article class="news-item" id="search-news-${index}">
-                        <div class="news-meta">
-                            <span class="news-source" onclick="openSourceUrl('${news.sourceUrl || '#'}')">${news.source}</span>
-                            <span>${formatDate(news.date)}</span>
-                        </div>
-                        <h3 class="news-title" onclick="toggleSearchNewsContent(${index})">
-                            ${news.title}
-                            <span class="expand-icon" id="search-icon-${index}">▼</span>
-                        </h3>
-                        <p class="news-summary">${news.summary}</p>
-                        
-                        <div class="news-content" id="search-content-${index}">
-                            <div class="news-tags">
-                                ${news.tags ? news.tags.map(tag => `<span class="news-tag">${tag}</span>`).join('') : ''}
-                            </div>
-                            
-                            <div class="news-full-text">
-                                ${news.content ? news.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('') : ''}
-                            </div>
-                            
-                            <div class="news-actions">
-                                <span class="news-action">
-                                    📖 ${news.readTime || '2 min'} de lectura
-                                </span>
-                                <span class="news-action" onclick="shareNews('${news.title}')">
-                                    🔗 Compartir
-                                </span>
-                                <span class="news-action" onclick="saveNews(${index})">
-                                    ⭐ Guardar
-                                </span>
-                                <span class="news-action" onclick="openSourceUrl('${news.sourceUrl || '#'}')">
-                                    🌐 Ver original
-                                </span>
-                            </div>
-                        </div>
-                    </article>
-                `).join('');
-            }
-        }
-
-        // Función para expandir/contraer contenido en búsqueda
-        function toggleSearchNewsContent(index) {
-            const content = document.getElementById(`search-content-${index}`);
-            const icon = document.getElementById(`search-icon-${index}`);
-            const newsItem = document.getElementById(`search-news-${index}`);
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                icon.classList.remove('rotated');
-                icon.textContent = '▼';
-                newsItem.classList.remove('expanded');
-            } else {
-                // Cerrar otras noticias abiertas
-                document.querySelectorAll('.news-content.show').forEach(item => {
-                    item.classList.remove('show');
-                });
-                document.querySelectorAll('.expand-icon.rotated').forEach(item => {
-                    item.classList.remove('rotated');
-                    item.textContent = '▼';
-                });
-                document.querySelectorAll('.news-item.expanded').forEach(item => {
-                    item.classList.remove('expanded');
-                });
-                
-                // Abrir la noticia seleccionada
-                content.classList.add('show');
-                icon.classList.add('rotated');
-                icon.textContent = '▲';
-                newsItem.classList.add('expanded');
-                
-                // Scroll suave hacia la noticia expandida
-                newsItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        // Función para formatear fecha
-        function formatDate(date) {
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // Función para compartir noticia
-        function shareNews(title) {
-            if (navigator.share) {
-                navigator.share({
-                    title: title,
-                    text: 'Lee esta noticia en InfoMercado',
-                    url: window.location.href
-                });
-            } else {
-                // Fallback para navegadores sin soporte
-                navigator.clipboard.writeText(window.location.href + ' - ' + title)
-                    .then(() => alert('Enlace copiado al portapapeles'))
-                    .catch(() => alert('No se pudo copiar el enlace'));
-            }
-        }
-
-        // Función para guardar noticia
-        function saveNews(index) {
-            // En implementación real, esto guardaría en base de datos o localStorage
-            alert('Noticia guardada en favoritos (función de demo)');
-        }
-
-        // Función para actualizar "última actualización"
-        function updateLastUpdated() {
+        // Función para actualizar estadísticas
+        function updateStats(result) {
             const now = new Date();
-            document.getElementById('lastUpdated').innerHTML = `
-                <div style="font-size: 0.9rem; color: #666;">
-                    Última actualización:<br>
-                    ${formatDate(now)}
-                </div>
-            `;
+            const timeString = now.toLocaleTimeString('es-ES', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            document.getElementById('totalNews').textContent = result.count;
+            document.getElementById('lastUpdate').textContent = timeString;
+            document.getElementById('sidebarTotal').textContent = allNews.length;
+            document.getElementById('sidebarVisible').textContent = filteredNews.length;
+            document.getElementById('lastSync').textContent = timeString;
+            
+            const cacheStat = document.getElementById('cacheStat');
+            const cacheStatus = document.getElementById('cacheStatus');
+            
+            if (result.cached) {
+                cacheStat.className = 'stat-item cached';
+                cacheStatus.textContent = result.stale ? 'Cache antiguo' : 'Desde cache';
+            } else {
+                cacheStat.className = 'stat-item fresh';
+                cacheStatus.textContent = 'Datos frescos';
+            }
         }
 
-        // Búsqueda con Enter
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchNews();
-            }
-        });
-
-        // Cargar noticias al inicio
-        window.addEventListener('load', function() {
-            loadNews();
-        });
-
-        // Actualizar noticias cada 12 horas (simulado cada 30 segundos para demo)
-        setInterval(function() {
-            if (Math.random() > 0.7) { // Simular actualización ocasional
-                loadNews();
-            }
-        }, 30000);
-    </script>
-</body>
-</html>
+        // Función para expandir/contraer contenido
+        function toggleNewsContent(newsId) {
+            const content = document.getElementById(`content-${newsId}`);
+            const icon = document.getElementById(`icon-${newsId}`);
+            const newsItem = document.getElementById(`news-${newsId}`);
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                icon.classList.remove('rotated');
+                icon.textContent = '▼';
+                newsItem.classList.remove('expanded');
+            } else {
+                // Cerrar otras noticias abiertas
+                document.querySelectorAll('.news-content.show').forEach(item => {
+                    item.classList.remove('show');
+                });
+                document.querySelectorAll('.expand-icon.rotated').forEach(item => {
+                    item.classList.remove('rotated');
+                    item.textContent = '▼';
+                });
+                document.querySelectorAll('.news-item.expanded').forEach(item => {
+                    item.classList.remove('expanded');
+                });
+                
+                //
